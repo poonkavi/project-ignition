@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      custom_phrases: {
+        Row: {
+          category: string | null
+          created_at: string
+          id: string
+          label: string
+          language: string | null
+          phrase_text: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          id?: string
+          label: string
+          language?: string | null
+          phrase_text: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          id?: string
+          label?: string
+          language?: string | null
+          phrase_text?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           age: number | null
@@ -44,6 +77,39 @@ export type Database = {
           role?: string | null
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      user_settings: {
+        Row: {
+          id: string
+          language: string | null
+          preferred_voice: string | null
+          speech_rate: number | null
+          theme: string | null
+          updated_at: string
+          user_id: string
+          volume: number | null
+        }
+        Insert: {
+          id?: string
+          language?: string | null
+          preferred_voice?: string | null
+          speech_rate?: number | null
+          theme?: string | null
+          updated_at?: string
+          user_id: string
+          volume?: number | null
+        }
+        Update: {
+          id?: string
+          language?: string | null
+          preferred_voice?: string | null
+          speech_rate?: number | null
+          theme?: string | null
+          updated_at?: string
+          user_id?: string
+          volume?: number | null
         }
         Relationships: []
       }
