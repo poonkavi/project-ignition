@@ -75,7 +75,9 @@ const Register = () => {
   const onSubmit = async (data: RegisterFormData) => {
     setIsSubmitting(true);
     
-    const { error } = await signUp(data.email, data.password, data.name);
+    // Map "family" to "family_member" for database enum
+    const dbRole = data.role === "family" ? "family_member" : data.role;
+    const { error } = await signUp(data.email, data.password, data.name, dbRole);
     
     if (error) {
       let errorMessage = error.message;
