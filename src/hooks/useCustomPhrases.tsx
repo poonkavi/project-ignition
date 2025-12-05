@@ -42,6 +42,48 @@ export const useCustomPhrases = () => {
     fetchPhrases();
   }, [fetchPhrases]);
 
+  // Real-time subscription for live updates
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase
+      .channel('custom-phrases-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'custom_phrases',
+          filter: `user_id=eq.${user.id}`,
+        },
+        (payload) => {
+          console.log('Real-time update:', payload);
+          
+          if (payload.eventType === 'INSERT') {
+            const newPhrase = payload.new as CustomPhrase;
+            setPhrases((prev) => {
+              // Avoid duplicates from optimistic updates
+              if (prev.some((p) => p.id === newPhrase.id)) return prev;
+              return [newPhrase, ...prev];
+            });
+          } else if (payload.eventType === 'UPDATE') {
+            const updatedPhrase = payload.new as CustomPhrase;
+            setPhrases((prev) =>
+              prev.map((p) => (p.id === updatedPhrase.id ? updatedPhrase : p))
+            );
+          } else if (payload.eventType === 'DELETE') {
+            const deletedId = payload.old.id;
+            setPhrases((prev) => prev.filter((p) => p.id !== deletedId));
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user]);
+
   const createPhrase = async (label: string, phraseText: string, language = "en", category?: string) => {
     if (!user) return null;
 
