@@ -61,6 +61,10 @@ export const useUserSettings = () => {
   const updateSettings = async (updates: Partial<Omit<UserSettings, "id" | "user_id">>) => {
     if (!user || !settings) return null;
 
+    // Optimistic update
+    const previousSettings = settings;
+    setSettings({ ...settings, ...updates });
+
     const { data, error } = await supabase
       .from("user_settings")
       .update(updates)
@@ -69,6 +73,8 @@ export const useUserSettings = () => {
       .single();
 
     if (error) {
+      // Rollback on error
+      setSettings(previousSettings);
       console.error("Failed to update settings:", error);
       return null;
     }

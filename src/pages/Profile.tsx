@@ -13,8 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+import { useProfile } from "@/hooks/useProfile";
 
 const medicalConditions = [
   "Stroke Recovery",
@@ -32,7 +31,7 @@ const medicalConditions = [
 const Profile = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
-  const [loading, setLoading] = useState(true);
+  const { profile, loading: profileLoading, updateProfile } = useProfile();
   const [saving, setSaving] = useState(false);
 
   const [name, setName] = useState("");
@@ -46,56 +45,28 @@ const Profile = () => {
   }, [user, authLoading, navigate]);
 
   useEffect(() => {
-    const fetchProfile = async () => {
-      if (!user) return;
-
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("user_id", user.id)
-        .maybeSingle();
-
-      if (error) {
-        toast.error("Failed to load profile");
-        console.error(error);
-      } else if (data) {
-        setName(data.name || "");
-        setAge(data.age?.toString() || "");
-        setMedicalCondition(data.medical_condition || "");
-      }
-      setLoading(false);
-    };
-
-    fetchProfile();
-  }, [user]);
+    if (profile) {
+      setName(profile.name || "");
+      setAge(profile.age?.toString() || "");
+      setMedicalCondition(profile.medical_condition || "");
+    }
+  }, [profile]);
 
   const handleSave = async () => {
-    if (!user) return;
     if (!name.trim()) {
-      toast.error("Name is required");
       return;
     }
 
     setSaving(true);
-    const { error } = await supabase
-      .from("profiles")
-      .update({
-        name: name.trim(),
-        age: age ? parseInt(age) : null,
-        medical_condition: medicalCondition || null,
-      })
-      .eq("user_id", user.id);
-
-    if (error) {
-      toast.error("Failed to save profile");
-      console.error(error);
-    } else {
-      toast.success("Profile updated");
-    }
+    await updateProfile({
+      name: name.trim(),
+      age: age ? parseInt(age) : null,
+      medical_condition: medicalCondition || null,
+    });
     setSaving(false);
   };
 
-  if (authLoading || loading) {
+  if (authLoading || profileLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
