@@ -134,12 +134,12 @@ const Settings = () => {
 
               <div className="space-y-2">
                 <Label>Voice</Label>
-                <Select value={selectedVoice} onValueChange={handleVoiceChange}>
+                <Select value={selectedVoice || "default"} onValueChange={(value) => handleVoiceChange(value === "default" ? "" : value)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Default voice" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Default</SelectItem>
+                    <SelectItem value="default">Default</SelectItem>
                     {uniqueVoices.map((voice) => (
                       <SelectItem key={voice.name} value={voice.name}>
                         {voice.name} ({voice.lang})
