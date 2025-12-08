@@ -3,12 +3,13 @@ import { useNavigate, Link } from "react-router-dom";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Mic, Eye, EyeOff, Loader2 } from "lucide-react";
+import { Mic, Eye, EyeOff, Loader2, Camera, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { FaceLogin } from "@/components/FaceLogin";
 
 const loginSchema = z.object({
   email: z.string().trim().email("Please enter a valid email address"),
@@ -23,6 +24,8 @@ const Login = () => {
   const { signIn, user, loading: authLoading } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showFaceLogin, setShowFaceLogin] = useState(false);
+  const [showEmergencyFace, setShowEmergencyFace] = useState(false);
 
   const {
     register,
@@ -72,9 +75,41 @@ const Login = () => {
     );
   }
 
+  // Emergency Face Login Mode
+  if (showEmergencyFace) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-background p-6">
+        <FaceLogin 
+          onBack={() => setShowEmergencyFace(false)} 
+          isEmergency={true} 
+        />
+      </div>
+    );
+  }
+
+  // Regular Face Login Mode
+  if (showFaceLogin) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-background p-6">
+        <FaceLogin onBack={() => setShowFaceLogin(false)} />
+      </div>
+    );
+  }
+
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-background p-6">
       <div className="w-full max-w-md">
+        {/* Emergency Face Login Button */}
+        <Button
+          onClick={() => setShowEmergencyFace(true)}
+          variant="destructive"
+          size="lg"
+          className="w-full min-h-[60px] mb-6 text-lg font-bold"
+        >
+          <AlertTriangle className="mr-2 h-6 w-6" />
+          EMERGENCY FACE LOGIN
+        </Button>
+
         {/* Logo */}
         <div className="mb-8 flex flex-col items-center">
           <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary">
@@ -82,6 +117,28 @@ const Login = () => {
           </div>
           <h1 className="text-2xl font-bold text-foreground">Welcome Back</h1>
           <p className="mt-2 text-muted-foreground">Sign in to your account</p>
+        </div>
+
+        {/* Face Login Button */}
+        <Button
+          onClick={() => setShowFaceLogin(true)}
+          variant="outline"
+          size="lg"
+          className="w-full min-h-[52px] mb-4"
+        >
+          <Camera className="mr-2 h-5 w-5" />
+          Login with Face
+        </Button>
+
+        <div className="relative my-4">
+          <div className="absolute inset-0 flex items-center">
+            <span className="w-full border-t" />
+          </div>
+          <div className="relative flex justify-center text-xs uppercase">
+            <span className="bg-background px-2 text-muted-foreground">
+              Or continue with email
+            </span>
+          </div>
         </div>
 
         {/* Login Form */}

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Loader2, Save } from "lucide-react";
+import { Loader2, Save, Camera, Trash2 } from "lucide-react";
 import Layout from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,8 +12,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
+import { useFaceRecognition } from "@/hooks/useFaceRecognition";
+import { FaceEnrollment } from "@/components/FaceEnrollment";
 
 const medicalConditions = [
   "Stroke Recovery",
@@ -32,7 +42,11 @@ const Profile = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const { profile, loading: profileLoading, updateProfile } = useProfile();
+  const { hasFaceEnrolled, removeFaceEnrollment } = useFaceRecognition();
   const [saving, setSaving] = useState(false);
+  const [faceEnrolled, setFaceEnrolled] = useState(false);
+  const [checkingFace, setCheckingFace] = useState(true);
+  const [enrollDialogOpen, setEnrollDialogOpen] = useState(false);
 
   const [name, setName] = useState("");
   const [age, setAge] = useState("");
@@ -52,6 +66,18 @@ const Profile = () => {
     }
   }, [profile]);
 
+  // Check if face is enrolled
+  useEffect(() => {
+    const checkFaceEnrollment = async () => {
+      if (user) {
+        const enrolled = await hasFaceEnrolled(user.id);
+        setFaceEnrolled(enrolled);
+        setCheckingFace(false);
+      }
+    };
+    checkFaceEnrollment();
+  }, [user, hasFaceEnrolled]);
+
   const handleSave = async () => {
     if (!name.trim()) {
       return;
@@ -64,6 +90,14 @@ const Profile = () => {
       medical_condition: medicalCondition || null,
     });
     setSaving(false);
+  };
+
+  const handleRemoveFace = async () => {
+    if (!user) return;
+    const success = await removeFaceEnrollment(user.id);
+    if (success) {
+      setFaceEnrolled(false);
+    }
   };
 
   if (authLoading || profileLoading) {
@@ -130,6 +164,64 @@ const Profile = () => {
             <p className="text-sm text-muted-foreground">
               <strong>Email:</strong> {user.email}
             </p>
+          </div>
+
+          {/* Face Recognition Section */}
+          <div className="rounded-lg border p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-medium flex items-center gap-2">
+                  <Camera className="h-4 w-4" />
+                  Emergency Face Login
+                </h3>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {checkingFace 
+                    ? "Checking..."
+                    : faceEnrolled 
+                      ? "Face enrolled for emergency access"
+                      : "Enable quick login using face recognition"
+                  }
+                </p>
+              </div>
+              
+              {!checkingFace && (
+                faceEnrolled ? (
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={handleRemoveFace}
+                    className="text-destructive hover:text-destructive"
+                  >
+                    <Trash2 className="h-4 w-4 mr-1" />
+                    Remove
+                  </Button>
+                ) : (
+                  <Dialog open={enrollDialogOpen} onOpenChange={setEnrollDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" size="sm">
+                        <Camera className="h-4 w-4 mr-1" />
+                        Setup
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-md">
+                      <DialogHeader>
+                        <DialogTitle>Face Enrollment</DialogTitle>
+                        <DialogDescription>
+                          Enable emergency face login for quick access when you need help.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <FaceEnrollment 
+                        onComplete={() => {
+                          setFaceEnrolled(true);
+                          setEnrollDialogOpen(false);
+                        }}
+                        onCancel={() => setEnrollDialogOpen(false)}
+                      />
+                    </DialogContent>
+                  </Dialog>
+                )
+              )}
+            </div>
           </div>
 
           <Button onClick={handleSave} disabled={saving} className="w-full">
